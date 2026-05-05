@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/io.h>
 
 #define BYTE    __uint8_t
@@ -50,7 +51,7 @@ bool CheckPrivilege(void);
 void IoBaseWriteByte(BYTE Port, BYTE Value);
 BYTE IoBaseReadByte(BYTE Port);
 BYTE IoIndexReadByte(BYTE IndexPort, BYTE DataPort, BYTE Offset);
-void IoIndexWriteByte(BYTE IndexPort, BYTE DataPort, BYTE Offset);
+void IoIndexWriteByte(BYTE IndexPort, BYTE DataPort, BYTE Offset, BYTE Value);
 
 WORD CalcChecksum(BYTE* buf, int bufsize);
 
@@ -91,17 +92,53 @@ int main(int argc, char** argv)
         buf[n] = IoIndexReadByte(cmos_io_port, cmos_io_port + 1, n);
     }
 
-    //
-    // Demo: Update tREF value
-    //
-    WORD tREF = pMemConf->tREF;
-    if (argc > 1) {
-        tREF = (WORD)atoi(argv[1]);
-        pMemConf->tREF = tREF;
-        WriteMemCfg((BYTE*)pMemConf, config_space_size);
+    if (argc == 3) {
+        int val = atoi(argv[2]);
+        char *arg = argv[1];
+        void *ptr = NULL;
+        int size = 0;
+        const char *n,*name;
+	n="ClockSpeed";if (strcmp(arg,n) == 0 && val>300 && val < 2000) { ptr = &pMemConf->ClockSpeed; size = 2; name=n;}
+	n="tCL";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tCL; size = 1; name=n;}
+	n="tRAS";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tRAS; size = 1; name=n;}
+	n="tRCDRD";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tRCDRD; size = 1; name=n;}
+	n="tRCDWR";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tRCDWR; size = 1; name=n;}
+	n="tRCAb";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tRCAb; size = 1; name=n;}
+	n="tRCPb";if (strcmp(arg,n) == 0) { ptr = &pMemConf->tRCPb; size = 1; name=n;}
+	n="tRPAb";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tRPAb; size = 1; name=n;}
+	n="tRPPb";if (strcmp(arg,n) == 0) { ptr = &pMemConf->tRPPb; size = 1; name=n;}
+	n="tRRDS";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tRRDS; size = 1; name=n;}
+	n="tRRDL";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tRRDL; size = 1; name=n;}
+	n="tRTP";if (strcmp(arg,n) == 0) { ptr = &pMemConf->tRTP; size = 1; name=n;}
+	n="tFAW";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tFAW; size = 1; name=n;}
+	n="tREF";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tREF; size = 2; name=n;}
+	n="RFCPb";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->RFCPb; size = 2; name=n;}
+	n="tRFC";if (strcmp(arg,n) == 0 && val>0) { ptr = &pMemConf->tRFC; size = 2; name=n;}
+        n="UMA_SIZE";if (strcmp(arg,n) == 0 && val>=256 && val < 16384) { ptr = &pMemConf->UMA_SIZE; size = 2; name=n; val&=0xFFF0;}
+        if (ptr != NULL){
+    	    BYTE *bptr;
+    	    WORD *wptr;
+    	    switch(size) {
+    		case 1:
+        		bptr = (BYTE*) ptr;
+        		if (val>255) val= -1; else *bptr = (BYTE) val;
+        		break;
+    		case 2:
+        		wptr = (WORD*) ptr;
+        		if (val>65535) val= -1; else  *wptr = (WORD) val;
+        		break;
+    		default:
+        		val = -1;
+    	    }
+            if (val > -1) {
+        	printf("setting %s to %d\n",name,val);
+        	WriteMemCfg((BYTE*)pMemConf, config_space_size);
+            }
+        }
+        return 0;
     }
     
-    DumpBuffer(buf, page_size);    
+    DumpBuffer(buf, page_size);
     DumpMemCfg(buf + config_space_offset_start, config_space_size); 
 
     return 0;
@@ -128,7 +165,7 @@ BYTE IoIndexReadByte(BYTE IndexPort, BYTE DataPort, BYTE Offset)
     return IoBaseReadByte(DataPort);
 }
 
-BYTE IoIndexWriteByte(BYTE IndexPort, BYTE DataPort, BYTE Offset, BYTE Value)
+void IoIndexWriteByte(BYTE IndexPort, BYTE DataPort, BYTE Offset, BYTE Value)
 {
     IoBaseWriteByte(IndexPort, Offset);
     IoBaseWriteByte(DataPort, Value);
@@ -185,23 +222,23 @@ void DumpMemCfg(BYTE* Config, int Size)
     }
     printf("Checksum     : 0x%04X\n", pMemConf->Checksum);
     //printf("             : 0x%04X\n", CalChecksum(Config+6, 20));
-    printf("ClockSpeed   : %d MHz\n", pMemConf->ClockSpeed);
-    printf("tCL          : %02d\n", pMemConf->tCL);
-    printf("tRAS         : %02d\n", pMemConf->tRAS);
-    printf("tRCDRD       : %02d\n", pMemConf->tRCDRD);
-    printf("tRCDWR       : %02d\n", pMemConf->tRCDWR);
-    printf("tRCAb        : %02d\n", pMemConf->tRCAb);
-    printf("tRCPb        : %02d\n", pMemConf->tRCPb);
-    printf("tRPAb        : %02d\n", pMemConf->tRPAb);
-    printf("tRPPb        : %02d\n", pMemConf->tRPPb);
-    printf("tRRDS        : %02d\n", pMemConf->tRRDS);
-    printf("tRRDL        : %02d\n", pMemConf->tRRDL);
-    printf("tRTP         : %02d\n", pMemConf->tRTP);
-    printf("tFAW         : %02d\n", pMemConf->tFAW);
-    printf("tREF         : %04d\n", pMemConf->tREF);
-    printf("RFCPb        : %04d\n", pMemConf->RFCPb);
-    printf("tRFC         : %04d\n", pMemConf->tRFC);
-    printf("UMA_SIZE     : %04d\n", pMemConf->UMA_SIZE);
+    printf("ClockSpeed=%d\n", pMemConf->ClockSpeed);
+    printf("tCL=%02d\n", pMemConf->tCL);
+    printf("tRAS=%02d\n", pMemConf->tRAS);
+    printf("tRCDRD=%02d\n", pMemConf->tRCDRD);
+    printf("tRCDWR=%02d\n", pMemConf->tRCDWR);
+    printf("tRCAb=%02d\n", pMemConf->tRCAb);
+    printf("tRCPb=%02d\n", pMemConf->tRCPb);
+    printf("tRPAb=%02d\n", pMemConf->tRPAb);
+    printf("tRPPb=%02d\n", pMemConf->tRPPb);
+    printf("tRRDS=%02d\n", pMemConf->tRRDS);
+    printf("tRRDL=%02d\n", pMemConf->tRRDL);
+    printf("tRTP=%02d\n", pMemConf->tRTP);
+    printf("tFAW=%02d\n", pMemConf->tFAW);
+    printf("tREF=%04d\n", pMemConf->tREF);
+    printf("RFCPb=%04d\n", pMemConf->RFCPb);
+    printf("tRFC=%04d\n", pMemConf->tRFC);
+    printf("UMA_SIZE=%04d\n", pMemConf->UMA_SIZE);
 }
 
 void WriteMemCfg(BYTE* Config, int Size)

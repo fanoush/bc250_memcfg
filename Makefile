@@ -1,3 +1,3 @@
 all:
-	g++ main.cpp -o bc250memcfg
+	gcc -Os -s main.cpp -o bc250memcfg
 
