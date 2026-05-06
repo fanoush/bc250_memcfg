@@ -13,6 +13,8 @@ setting UMA_SIZE to 512
 ```
 and then reboot the machine.
 
+Running without parameters prints all values for all tunable parameters.
+
 You can also tune memory timings (like tREF) but it may affect stability and no significant gains were confirmed. For more info see https://github.com/NexGen-3D-Printing/SteamMachine/blob/main/Memory-Timings-Explained.txt
 
 This tool writes to battery backed up CMOS RAM, to clear it clear CMOS by jumper on the board and/or by removing battery.
