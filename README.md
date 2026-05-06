@@ -21,3 +21,7 @@ You can also tune memory timings (like tREF) but it may affect stability and no 
 This tool writes to battery backed up CMOS RAM, to clear it clear CMOS by jumper on the board and/or by removing battery.
 
 This tool does not require modified BIOS, it was confirmed that it works both with P3.00 and P5.00 original BIOS so no custom BIOS is needed if you just want to modify VRAM size.
+
+## Credits
+
+Initial source version of this utility was published on Discord in Mem Timing Utility topic by ethkey. It printed all parameters and hardcoded 'demo' writing of tREF was causing segfaults. I just fixed the crash and added setting via command line parameters.
