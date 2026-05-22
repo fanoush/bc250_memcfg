@@ -17,6 +17,8 @@ setting UMA_SIZE to 512
 ```
 and then reboot the machine.
 
+For `UMA_SIZE` you can use any sensible value >= 256, the number gets automatically aligned to 16MB steps.
+
 Running without parameters prints all values for all tunable parameters.
 
 You can also tune memory timings (like tREF) but it may affect stability and no significant gains were confirmed. For more info see https://github.com/NexGen-3D-Printing/SteamMachine/blob/main/Memory-Timings-Explained.txt
